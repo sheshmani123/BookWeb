@@ -4,14 +4,13 @@ import Stripe from "stripe";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
-const placeOrder = async (req, res) => {
+export const placeOrder = async (req, res) => {
   const frontend_url = "http://localhost:5173";
-  console.log("Request Body Before Order Creation:", req.body); // Debugging: Log the request body
+  console.log("Request Body Before Order Creation:", req.body);
 
   try {
-    const { userId, items, amount, address } = req.body; // Destructure necessary fields
+    const { userId, items, amount, address } = req.body;
 
-    // Ensure all required fields are present
     if (!userId || !items || !amount || !address) {
       return res.status(400).json({ success: false, message: "Missing required fields" });
     }
@@ -66,10 +65,9 @@ const placeOrder = async (req, res) => {
     res.status(500).json({ success: false, message: "Error placing order" });
   }
 };
-
- 
-
 export const verifyOrder = async (req, res) => {
+  console.log('Request Body:', req.body); // Log the entire request body
+
   const { orderId, success } = req.body;
   console.log(`verifyOrder called with orderId: ${orderId}, success: ${success}`);
 
@@ -95,4 +93,26 @@ export const verifyOrder = async (req, res) => {
   }
 };
 
-export default placeOrder;
+
+export const userOrders = async (req, res) => {
+  console.log("Request body:", req.body);
+
+  try {
+    const userId = req.body.userId;
+    if (!userId) {
+      return res.status(400).json({ success: false, message: "userId is required" });
+    }
+
+    const orders = await orderModel.find({ userId });
+    console.log("Orders found:", orders);
+
+    if (orders.length === 0) {
+      return res.status(404).json({ success: false, message: "No orders found for this user" });
+    }
+
+    res.status(200).json({ success: true, data: orders });
+  } catch (error) {
+    console.error("Error fetching user orders:", error.message);
+    res.status(500).json({ success: false, message: "Error fetching user orders", error: error.message });
+  }
+};
